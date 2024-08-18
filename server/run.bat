@@ -1,1 +1,1 @@
-venv\Scripts\lib\flask run
+.\venv\Scripts\flask.exe run

@@ -64,7 +64,7 @@ venv\Scripts\activate.bat
 ```
 ### Windows
 ```
-venv\Scripts\lib\python -m pip install -r requirements.txt
+venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
 ## Run Manual
@@ -74,7 +74,7 @@ venv\Scripts\lib\python -m pip install -r requirements.txt
 ```
 ### Windows
 ```
-venv\Scripts\lib\flask run
+.\venv\Scripts\flask.exe run
 ```
 
 ## Deactivate venv

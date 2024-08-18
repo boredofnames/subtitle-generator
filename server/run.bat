@@ -1,0 +1,1 @@
+venv\Scripts\lib\flask run

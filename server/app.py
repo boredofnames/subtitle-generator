@@ -5,6 +5,7 @@ from lib.yt import get_audio
 from lib.ffmpeg import segment_audio
 from lib.whisper import generate_vtt
 from lib.hash import get_hashed
+from lib.subtitles import offset
 
 app = Flask(__name__)
 
@@ -43,7 +44,8 @@ def get_vtt():
     get_audio(url, audio_path)
     segment_audio(audio_path, options["segment_length"] * 60)
     remove(audio_path)
-
+    
+    segment_number = 0
     with scandir("tmp/segments") as it:
         for entry in it:
             if entry.name.endswith(".mp3") and entry.is_file():
@@ -55,9 +57,10 @@ def get_vtt():
                 if entry.name.endswith("_000.mp3"):
                     data = vtt["data"]
                 else:
-                    data = vtt["data"].replace('WEBVTT\n\n', '')
+                    data =  offset(vtt["data"], options["segment_length"] * 60 * segment_number)                
                 with open(vtt_path, "a") as final_file:
                     final_file.write(data)
+                segment_number += 1
     with open(vtt_path, "r") as final_file:
         final_vtt = final_file.read()                 
                 

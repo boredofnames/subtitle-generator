@@ -1,4 +1,4 @@
-from os import scandir, remove
+from os import scandir, remove, makedirs
 from os.path import exists
 from time import time
 from flask import Flask, jsonify, request # type: ignore
@@ -12,28 +12,40 @@ app = Flask(__name__)
 
 options = {
     "remove_vtt": False,
-    "segment_length": 2 # in minutes
+    "segment_length": 2, # in minutes
+    "keep_tmp": False
 }
 
 total_time = 0
+
+def remove_tmp(path):
+    if not options["keep_tmp"]:
+        remove(path)
 
 def process_segment(path):
     start = time()
     generate_vtt(path, "small", "English")
     end = time()
-    remove(path)
+    remove_tmp(path)
     tmp_vtt_path = path.replace("/segments/", "/vtt/").replace("mp3", "vtt")
     with open(tmp_vtt_path, "r") as file:
         vtt = file.read()
-    remove(tmp_vtt_path)
+    remove_tmp(tmp_vtt_path)
     return {"data":vtt, "process_time": end - start}
 
+def create_dirs():
+    needed_dirs = ["./tmp/segments", "./vtt"]
+    for adir in needed_dirs:
+        if not exists(adir):
+            makedirs(adir)
+
 def create_vtt(url, hashed_url, vtt_path):
+    create_dirs()
     total_time = 0
     audio_path = "./tmp/" + hashed_url + ".mp3"
     get_audio(url, audio_path)
     segment_audio(audio_path, options["segment_length"] * 60)
-    remove(audio_path)
+    remove_tmp(audio_path)
     segment_number = 0
     with scandir("tmp/segments") as it:
         for entry in it:
@@ -56,15 +68,18 @@ def hello():
 
 @app.route('/vtt', methods=['POST'])
 def get_vtt():
-    url = request.get_json()["url"]
-    print("user requesting subtitles for url " + url)
-    hashed_url = get_hashed(url)
-    vtt_path = './vtt/' + hashed_url + ".vtt"
-    if not exists(vtt_path):
-        create_vtt(url, hashed_url, vtt_path)
-    with open(vtt_path, "r") as final_file:
-        final_vtt = final_file.read()                 
-    if(options["remove_vtt"]):
-        print("removing vtt at "+ vtt_path)
-        remove(vtt_path)
-    return jsonify({"vtt": final_vtt})
+    try:
+        url = request.get_json()["url"]
+        print("user requesting subtitles for url " + url)
+        hashed_url = get_hashed(url)
+        vtt_path = './vtt/' + hashed_url + ".vtt"
+        if not exists(vtt_path):
+            create_vtt(url, hashed_url, vtt_path)
+        with open(vtt_path, "r") as final_file:
+            final_vtt = final_file.read()                 
+        if(options["remove_vtt"]):
+            print("removing vtt at "+ vtt_path)
+            remove(vtt_path)
+        return jsonify({"vtt": final_vtt})
+    except Exception as e:
+        return jsonify({"error": str(type(e).__name__), "cause": str(type(e).__cause__)})

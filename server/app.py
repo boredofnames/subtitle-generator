@@ -1,7 +1,7 @@
 from os import scandir, remove, makedirs
 from os.path import exists
 from time import time
-from flask import Flask, jsonify, request # type: ignore
+from flask import Flask, jsonify, request  # type: ignore
 from lib.yt import get_audio
 from lib.ffmpeg import segment_audio
 from lib.whisper import generate_vtt
@@ -10,17 +10,15 @@ from lib.subtitles import offset
 
 app = Flask(__name__)
 
-options = {
-    "remove_vtt": False,
-    "segment_length": 5, # in minutes
-    "keep_tmp": False
-}
+options = {"remove_vtt": False, "segment_length": 5, "keep_tmp": False}  # in minutes
 
 total_time = 0
+
 
 def remove_tmp(path):
     if not options["keep_tmp"]:
         remove(path)
+
 
 def process_segment(path):
     start = time()
@@ -31,7 +29,8 @@ def process_segment(path):
     with open(tmp_vtt_path, "r") as file:
         vtt = file.read()
     remove_tmp(tmp_vtt_path)
-    return {"data":vtt, "process_time": end - start}
+    return {"data": vtt, "process_time": end - start}
+
 
 def create_dirs():
     needed_dirs = ["./tmp/segments", "./vtt"]
@@ -39,12 +38,15 @@ def create_dirs():
         if not exists(adir):
             makedirs(adir)
 
+
 def create_vtt(url, hashed_url, vtt_path):
     create_dirs()
     elapsed = 0
     audio_path = "./tmp/" + hashed_url + ".mp3"
     get_audio(url, audio_path)
-    segments = segment_audio(path=audio_path, duration=options["segment_length"] * 60, output_name=hashed_url)
+    segments = segment_audio(
+        path=audio_path, duration=options["segment_length"] * 60, output_name=hashed_url
+    )
     remove_tmp(audio_path)
     segment_number = 0
     with scandir("./tmp/segments") as it:
@@ -52,35 +54,39 @@ def create_vtt(url, hashed_url, vtt_path):
             if entry.name.endswith(".mp3") and entry.is_file():
                 print(entry.name, entry.path)
                 vtt = process_segment(entry.path)
-                print('segment done. took ' + str(vtt["process_time"]) + ' seconds')
+                print("segment done. took " + str(vtt["process_time"]) + " seconds")
                 if entry.name.endswith("_000.mp3"):
                     data = vtt["data"]
                 else:
                     print("elapsed", elapsed)
-                    data =  offset(vtt["data"], elapsed)                
+                    data = offset(vtt["data"], elapsed)
                 with open(vtt_path, "a") as final_file:
                     final_file.write(data)
                 elapsed += segments[segment_number]["duration"]
                 segment_number += 1
 
+
 @app.route("/")
 def hello():
     return "Hello, World!"
 
-@app.route('/vtt', methods=['POST'])
+
+@app.route("/vtt", methods=["POST"])
 def get_vtt():
     try:
         url = request.get_json()["url"]
         print("user requesting subtitles for url " + url)
         hashed_url = get_hashed(url)
-        vtt_path = './vtt/' + hashed_url + ".vtt"
+        vtt_path = "./vtt/" + hashed_url + ".vtt"
         if not exists(vtt_path):
             create_vtt(url, hashed_url, vtt_path)
         with open(vtt_path, "r") as final_file:
-            final_vtt = final_file.read()                 
-        if(options["remove_vtt"]):
-            print("removing vtt at "+ vtt_path)
+            final_vtt = final_file.read()
+        if options["remove_vtt"]:
+            print("removing vtt at " + vtt_path)
             remove(vtt_path)
         return jsonify({"vtt": final_vtt})
     except Exception as e:
-        return jsonify({"error": str(type(e).__name__), "cause": str(type(e).__cause__)})
+        return jsonify(
+            {"error": str(type(e).__name__), "cause": str(type(e).__cause__)}
+        )

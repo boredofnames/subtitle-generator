@@ -27,7 +27,7 @@ def process_segment(path):
     generate_vtt(path, "small", "English")
     end = time()
     remove_tmp(path)
-    tmp_vtt_path = path.replace("/segments/", "/vtt/").replace("mp3", "vtt")
+    tmp_vtt_path = path.replace("/segments", "/vtt").replace("mp3", "vtt")
     with open(tmp_vtt_path, "r") as file:
         vtt = file.read()
     remove_tmp(tmp_vtt_path)
@@ -47,7 +47,7 @@ def create_vtt(url, hashed_url, vtt_path):
     segments = segment_audio(path=audio_path, duration=options["segment_length"] * 60, output_name=hashed_url)
     remove_tmp(audio_path)
     segment_number = 0
-    with scandir("tmp/segments") as it:
+    with scandir("./tmp/segments") as it:
         for entry in it:
             if entry.name.endswith(".mp3") and entry.is_file():
                 print(entry.name, entry.path)

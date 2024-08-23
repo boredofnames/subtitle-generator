@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 options = {
     "remove_vtt": False,
-    "segment_length": 2, # in minutes
+    "segment_length": 5, # in minutes
     "keep_tmp": False
 }
 
@@ -41,25 +41,26 @@ def create_dirs():
 
 def create_vtt(url, hashed_url, vtt_path):
     create_dirs()
-    total_time = 0
+    elapsed = 0
     audio_path = "./tmp/" + hashed_url + ".mp3"
     get_audio(url, audio_path)
-    segment_audio(audio_path, options["segment_length"] * 60)
+    segments = segment_audio(path=audio_path, duration=options["segment_length"] * 60, output_name=hashed_url)
     remove_tmp(audio_path)
     segment_number = 0
     with scandir("tmp/segments") as it:
         for entry in it:
             if entry.name.endswith(".mp3") and entry.is_file():
                 print(entry.name, entry.path)
-                total_time += options["segment_length"]
                 vtt = process_segment(entry.path)
                 print('segment done. took ' + str(vtt["process_time"]) + ' seconds')
                 if entry.name.endswith("_000.mp3"):
                     data = vtt["data"]
                 else:
-                    data =  offset(vtt["data"], options["segment_length"] * 60 * segment_number)                
+                    print("elapsed", elapsed)
+                    data =  offset(vtt["data"], elapsed)                
                 with open(vtt_path, "a") as final_file:
                     final_file.write(data)
+                elapsed += segments[segment_number]["duration"]
                 segment_number += 1
 
 @app.route("/")

@@ -2,15 +2,15 @@ from os import scandir, remove, makedirs
 from os.path import exists
 from time import time
 from flask import Flask, jsonify, request  # type: ignore
-from lib.yt import get_audio
-from lib.ffmpeg import segment_audio
+from lib.yt import get_video
+from lib.ffmpeg import segment
 from lib.whisper import generate_vtt
 from lib.hash import get_hashed
 from lib.subtitles import offset
 
 app = Flask(__name__)
 
-options = {"remove_vtt": False, "segment_length": 5, "keep_tmp": False}  # in minutes
+options = {"remove_vtt": False, "segment_length": 5, "keep_tmp": True}  # in minutes
 
 total_time = 0
 
@@ -25,7 +25,7 @@ def process_segment(path):
     generate_vtt(path, "small", "English")
     end = time()
     remove_tmp(path)
-    tmp_vtt_path = path.replace("/segments", "/vtt").replace("mp3", "vtt")
+    tmp_vtt_path = path.replace("/segments", "/vtt").replace("mp4", "vtt")
     with open(tmp_vtt_path, "r") as file:
         vtt = file.read()
     remove_tmp(tmp_vtt_path)
@@ -42,20 +42,20 @@ def create_dirs():
 def create_vtt(url, hashed_url, vtt_path):
     create_dirs()
     elapsed = 0
-    audio_path = "./tmp/" + hashed_url + ".mp3"
-    get_audio(url, audio_path)
-    segments = segment_audio(
-        path=audio_path, duration=options["segment_length"] * 60, output_name=hashed_url
+    video_path = "./tmp/" + hashed_url + ".mp4"
+    get_video(url, video_path)
+    segments = segment(
+        path=video_path, duration=options["segment_length"] * 60, output_name=hashed_url
     )
-    remove_tmp(audio_path)
+    remove_tmp(video_path)
     segment_number = 0
     with scandir("./tmp/segments") as it:
         for entry in it:
-            if entry.name.endswith(".mp3") and entry.is_file():
+            if entry.name.endswith(".mp4") and entry.is_file():
                 print(entry.name, entry.path)
                 vtt = process_segment(entry.path)
                 print("segment done. took " + str(vtt["process_time"]) + " seconds")
-                if entry.name.endswith("_000.mp3"):
+                if entry.name.endswith("_000.mp4"):
                     data = vtt["data"]
                 else:
                     print("elapsed", elapsed)

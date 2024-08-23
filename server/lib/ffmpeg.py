@@ -1,26 +1,29 @@
-from subprocess import run
+from subprocess import run, check_output
 import re
+from json import loads
 from os.path import exists
-
-try:
-    from lib.utils import get_nearest, double_to_time_string
-except:
-    from utils import get_nearest, double_to_time_string
+from lib.utils import get_nearest, double_to_time_string
 
 
-def get_duration(path, format="seconds"):
-    command = [
-        "ffprobe",
-        "-v",
-        "error",
-        "-show_entries",
-        "stream=duration",
-        "-of",
-        "default=noprint_wrappers=1:nokey=1",
-        path,
-    ]
-    output = run(command, capture_output=True)
-    return float(output.stdout.decode("utf-8"))
+def get_metadata(path):
+    print("getting metadata")
+    metadata = check_output(
+        f"ffprobe -i {path} -v quiet -print_format json -show_format -hide_banner".split(
+            " "
+        )
+    )
+    print(metadata)
+    metadata = loads(metadata)
+    print(metadata)
+    return metadata
+
+
+def get_duration(path):
+    print("getting duration")
+    metadata = get_metadata(path)
+    duration = float(metadata["format"]["duration"])
+    print(f"Length of file is: {duration}")
+    return duration
 
 
 def get_silences(path, noise=-30, duration=0.25):
@@ -42,31 +45,45 @@ def offset(value, offset):
     return value + offset
 
 
-def segment_audio(path, duration, output_name):
-    print("segmenting audio")
+def segment(path, duration, output_name):
+    print("segmenting video", path)
     if not exists(path):
         raise FileNotFoundError("File not found " + path)
-    # segment the audio file into chunks of specified duration
+    # segment the video file into chunks of specified duration
     segments = []
     file_duration = get_duration(path)
+    print("file duration", file_duration)
     silences = get_silences(path)
-
     current_time = 0
     segments_total_time = 0
 
+    loop_number = 0
     while True:
+        print(loop_number)
         next_silence = get_nearest(silences, current_time + duration)
         last_silence_item = silences[-1]
         last_end = segments[-1]["end"] if len(segments) > 0 else 0
+        print(
+            "next silence, last silence item, last end",
+            next_silence,
+            last_silence_item,
+            last_end,
+        )
         if next_silence is last_silence_item:
             segment_duration = file_duration - segments_total_time
-            end = next_silence + segment_duration
+            end = current_time + segment_duration
         else:
             end = next_silence
             segment_duration = next_silence - last_end
-        print(segment_duration)
         start = current_time
         segments_total_time += segment_duration
+        print(
+            "segment duration, start, end, segments total time",
+            segment_duration,
+            start,
+            end,
+            segments_total_time,
+        )
         segments.append(
             {
                 "start": start,
@@ -77,14 +94,19 @@ def segment_audio(path, duration, output_name):
                 "duration_ts": double_to_time_string(segment_duration),
             }
         )
+        print("segments", segments)
         current_time = next_silence
+        print("current time", current_time)
         silences.remove(next_silence)
+        print("removed silence", next_silence)
         if next_silence is last_silence_item:
+            print("hit last silence, breaking out")
             break
+        loop_number += 1
 
     if segments_total_time != file_duration:
         print(
-            "WARNING: total duration of audio is not equal to the sum of segment durations",
+            "WARNING: total duration of video is not equal to the sum of segment durations",
             segments_total_time,
             file_duration,
         )
@@ -94,7 +116,7 @@ def segment_audio(path, duration, output_name):
     segment_count = 0
     for segment in segments:
         output_path = (
-            "./tmp/segments/" + output_name + "_" + str(segment_count).zfill(3) + ".mp3"
+            "./tmp/segments/" + output_name + "_" + str(segment_count).zfill(3) + ".mp4"
         )
         run(
             [
@@ -112,13 +134,6 @@ def segment_audio(path, duration, output_name):
         )
         segment_count += 1
 
-    print("segmented audio", segments)
+    print("segmented video", segments)
 
     return segments
-
-
-if __name__ == "__main__":
-    seg = segment_audio(
-        path="./tmp/48541a66b1.mp3", duration=60, output_name="48541a66b1"
-    )
-    print(seg)

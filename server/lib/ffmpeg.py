@@ -42,8 +42,9 @@ def segment_audio(path, duration, output_name):
     
     while True:
         next_silence = get_nearest(silences, current_time + duration)
+        last_silence_item = silences[-1]
         last_end = segments[-1]["end"] if len(segments) > 0 else 0
-        if next_silence is silences[-1]:
+        if next_silence is last_silence_item:
             segment_duration = file_duration - segments_total_time
             end = next_silence + segment_duration
         else:
@@ -61,7 +62,8 @@ def segment_audio(path, duration, output_name):
             "duration_ts": double_to_time_string(segment_duration),
         })
         current_time = next_silence
-        if next_silence is silences[-1]:
+        silences.remove(next_silence)
+        if next_silence is last_silence_item:
             break
         
     if segments_total_time != file_duration:
@@ -84,6 +86,5 @@ def segment_audio(path, duration, output_name):
     return segments
 
 if __name__ == "__main__":
-    seg = segment_audio(path="./tmp/354f0c3c5d.mp3", duration=120, output_name="354f0c3c5d")
+    seg = segment_audio(path="./tmp/48541a66b1.mp3", duration=60, output_name="48541a66b1")
     print(seg)
-    #print(get_duration("./tmp/7-rings.mp3"))

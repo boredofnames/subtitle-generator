@@ -10,7 +10,11 @@ from lib.subtitles import offset
 
 app = Flask(__name__)
 
-options = {"remove_vtt": False, "segment_length": 5, "keep_tmp": True}  # in minutes
+options = {
+    "remove_vtt": False,
+    "segment_length": 5,  # segment_length in minutes
+    "keep_tmp": False,
+}
 
 total_time = 0
 

@@ -5,6 +5,21 @@ from os.path import exists
 from lib.utils import get_nearest, double_to_time_string
 
 
+def get_mean_volume(path):
+    print("getting mean volume")
+    output = run(
+        f"ffmpeg -i {path} -filter:a volumedetect -hide_banner -f null /dev/null".split(
+            " "
+        ),
+        capture_output=True,
+    )
+    match_rx = (
+        r"\[Parsed_volumedetect_0 @ 0x[a-z0-9]+\]\smean_volume:\s(-?\d+\.?\d?)\sdB"
+    )
+    mean_volume = re.findall(match_rx, output.stderr.decode())
+    return float(mean_volume[0])
+
+
 def get_metadata(path):
     print("getting metadata")
     metadata = check_output(
@@ -35,7 +50,6 @@ def get_silences(path, noise=-30, duration=0.25):
     silence_out = silence_process.stderr.decode()
     silences = re.findall(rx_match, silence_out)
     silences = [float(silence) for silence in silences]
-    print("got silences", silences)
     return silences
 
 
@@ -53,7 +67,8 @@ def segment(path, duration, output_name):
     segments = []
     file_duration = get_duration(path)
     print("file duration", file_duration)
-    silences = get_silences(path)
+    mean_volume = get_mean_volume(path=path)
+    silences = get_silences(path=path, noise=mean_volume)
     current_time = 0
     segments_total_time = 0
 

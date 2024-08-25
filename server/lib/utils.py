@@ -1,4 +1,12 @@
+from tomllib import load as load_config
 import datetime
+
+with open("./config.toml", "rb") as f:
+    config = load_config(f)
+
+
+def get_config():
+    return config
 
 
 def time_string_to_double(time_str, offset=0):

@@ -46,7 +46,7 @@ def create_dirs():
 def create_vtt(url, hashed_url, vtt_path):
     create_dirs()
     elapsed = 0
-    video_path = "./tmp/" + hashed_url + ".mp4"
+    video_path = f"./tmp/{hashed_url}.mp4"
     get_video(url, video_path)
     segments = segment(
         path=video_path, duration=options["segment_length"] * 60, output_name=hashed_url
@@ -58,7 +58,7 @@ def create_vtt(url, hashed_url, vtt_path):
             if entry.name.endswith(".mp4") and entry.is_file():
                 print(entry.name, entry.path)
                 vtt = process_segment(entry.path)
-                print("segment done. took " + str(vtt["process_time"]) + " seconds")
+                print(f"segment done. took {str(vtt["process_time"])} seconds")
                 if entry.name.endswith("_000.mp4"):
                     data = vtt["data"]
                 else:
@@ -79,15 +79,16 @@ def hello():
 def get_vtt():
     try:
         url = request.get_json()["url"]
-        print("user requesting subtitles for url " + url)
         hashed_url = get_hashed(url)
-        vtt_path = "./vtt/" + hashed_url + ".vtt"
+        print(f"user requesting subtitles for url {url}, hash: {hashed_url}")
+        vtt_path = f"./vtt/{hashed_url}.vtt"
         if not exists(vtt_path):
+            print("vtt not found, generating")
             create_vtt(url, hashed_url, vtt_path)
         with open(vtt_path, "r") as final_file:
             final_vtt = final_file.read()
         if options["remove_vtt"]:
-            print("removing vtt at " + vtt_path)
+            print(f"removing vtt at {vtt_path}")
             remove(vtt_path)
         return jsonify({"vtt": final_vtt})
     except Exception as e:

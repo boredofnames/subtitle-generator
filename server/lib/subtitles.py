@@ -16,7 +16,5 @@ def offset(sub, offset=0):
         ]
         for cue in cues
     ]
-    cues = [
-        "{} --> {}\n{}\n".format(cue[0], cue[1], cue[2]) for i, cue in enumerate(cues)
-    ]
+    cues = [f"{cue[0]} --> {cue[1]}\n{cue[2]}\n" for i, cue in enumerate(cues)]
     return "\n".join(cues)

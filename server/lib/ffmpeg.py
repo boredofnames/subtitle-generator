@@ -22,11 +22,8 @@ def get_mean_volume(path):
 
 def get_metadata(path):
     print("getting metadata")
-    metadata = check_output(
-        f"ffprobe -i {path} -v quiet -print_format json -show_format -hide_banner".split(
-            " "
-        )
-    )
+    metadata_command = f"ffprobe -i {path} -v quiet -print_format json -show_format -hide_banner".split(" ")
+    metadata = check_output(metadata_command)
     print(metadata)
     metadata = loads(metadata)
     print(metadata)
@@ -44,9 +41,9 @@ def get_duration(path):
 def get_silences(path, noise=-30, duration=0.25):
     print("getting silences")
     rx_match = r"silence_start:\s(\d+\.?\d*)"
-    sd = "silencedetect=n=" + str(noise) + "dB:d=" + str(duration)
-    command = ["ffmpeg", "-i", path, "-af", sd, "-f", "null", "-"]
-    silence_process = run(command, capture_output=True)
+    sd = f"silencedetect=n={str(noise)}dB:d={str(duration)}"
+    silence_command = f"ffmpeg -i {path} -af {sd} -f null -".split(" ")
+    silence_process = run(silence_command, capture_output=True)
     silence_out = silence_process.stderr.decode()
     silences = re.findall(rx_match, silence_out)
     silences = [float(silence) for silence in silences]
@@ -62,7 +59,7 @@ def offset(value, offset):
 def segment(path, duration, output_name):
     print("segmenting video", path)
     if not exists(path):
-        raise FileNotFoundError("File not found " + path)
+        raise FileNotFoundError(f"File not found {path}")
     # segment the video file into chunks of specified duration
     segments = []
     file_duration = get_duration(path)
@@ -130,23 +127,9 @@ def segment(path, duration, output_name):
 
     segment_count = 0
     for segment in segments:
-        output_path = (
-            "./tmp/segments/" + output_name + "_" + str(segment_count).zfill(3) + ".mp4"
-        )
-        run(
-            [
-                "ffmpeg",
-                "-i",
-                path,
-                "-ss",
-                segment["start_ts"],
-                "-t",
-                segment["duration_ts"],
-                "-async",
-                "1",
-                output_path,
-            ]
-        )
+        output_path = f"./tmp/segments/{output_name}_{str(segment_count).zfill(3)}.mp4"
+        segment_command = f"ffmpeg -i {path} -ss {segment["start_ts"]} -t {segment["duration_ts"]} -async 1 {output_path}".split(" ")
+        run(segment_command)
         segment_count += 1
 
     print("segmented video", segments)

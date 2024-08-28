@@ -32,6 +32,7 @@ def get_vtt():
             remove(vtt_path)
         return jsonify({"vtt": final_vtt})
     except Exception as e:
+        print(e)
         return jsonify(
             {"error": str(type(e).__name__), "cause": str(type(e).__cause__)}
         )

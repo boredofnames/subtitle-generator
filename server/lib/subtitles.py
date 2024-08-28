@@ -1,4 +1,3 @@
-import datetime
 import re
 from lib.utils import time_string_to_double, double_to_time_string
 

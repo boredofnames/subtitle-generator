@@ -5,7 +5,7 @@ from lib.yt import get_video
 from lib.ffmpeg import segment
 from lib.whisper import generate_vtt
 from lib.subtitles import offset
-from lib.utils import get_config
+from lib.utils import get_config, average
 
 config = get_config()
 
@@ -34,9 +34,10 @@ def create_dirs():
 
 
 def create_vtt(url, hashed_url, vtt_path):
-    create_dirs()
+    segment_process_times = []
     elapsed = 0
     video_path = f"./tmp/{hashed_url}.mp4"
+    create_dirs()
     get_video(url, video_path)
     segments = segment(
         path=video_path, duration=config["files"]["segments"]["length"] * 60, output_name=hashed_url
@@ -48,7 +49,12 @@ def create_vtt(url, hashed_url, vtt_path):
             if entry.name.endswith(".mp4") and entry.is_file():
                 print(entry.name, entry.path)
                 vtt = process_segment(entry.path)
-                print(f"segment done. took {str(vtt["process_time"])} seconds")
+                segment_process_times.append(vtt["process_time"])
+                average_process_time = average(segment_process_times)
+                print(f"segment done. took {str(vtt["process_time"])} seconds. average process time: {str(average_process_time)}")
+                estimated_remaining_time = average_process_time * (len(segments)-(segment_number + 1))
+                if(elapsed >= estimated_remaining_time):
+                    print(f"should be able to watch? elapsed: {elapsed} >= estimated remaining time {estimated_remaining_time}")
                 if entry.name.endswith("_000.mp4"):
                     data = vtt["data"]
                 else:

@@ -30,3 +30,7 @@ def double_to_time_string(double):
 
 def get_nearest(lst, K):
     return lst[min(range(len(lst)), key=lambda i: abs(lst[i] - K))]
+
+
+def average(lst):
+    return sum(lst) / len(lst)

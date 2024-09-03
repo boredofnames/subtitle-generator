@@ -43,7 +43,7 @@ const injectSubs = (vttText) => {
 
 const onMessage = (request, sender, sendResponse) => {
     if (request.action === "vtt") {
-        injectSubs(formatVTT(request.vtt))
+        injectSubs(request.vtt)
     }
 }
 

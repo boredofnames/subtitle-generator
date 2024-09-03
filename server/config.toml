@@ -1,0 +1,10 @@
+[files]
+
+[files.segments]
+length = 5 # in minutes
+
+[files.tmp]
+remove = true
+
+[files.vtt]
+remove = false

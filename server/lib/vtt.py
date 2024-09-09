@@ -6,6 +6,8 @@ from lib.ffmpeg import segment
 from lib.whisper import generate_vtt
 from lib.subtitles import offset
 from lib.utils import get_config, average
+from lib.hash import get_hashed
+from json import dumps as stringify
 
 config = get_config()
 
@@ -33,7 +35,7 @@ def create_dirs():
             makedirs(adir)
 
 
-def create_vtt(url, hashed_url, vtt_path):
+def create_vtt(url, hashed_url, vtt_path, ws=None):
     segment_process_times = []
     elapsed = 0
     video_path = f"./tmp/{hashed_url}.mp4"
@@ -44,6 +46,7 @@ def create_vtt(url, hashed_url, vtt_path):
     )
     remove_tmp(video_path)
     segment_number = 0
+    notifed = False
     with scandir("./tmp/segments") as it:
         for entry in it:
             if entry.name.endswith(".mp4") and entry.is_file():
@@ -55,12 +58,38 @@ def create_vtt(url, hashed_url, vtt_path):
                 estimated_remaining_time = average_process_time * (len(segments)-(segment_number + 1))
                 if(elapsed >= estimated_remaining_time):
                     print(f"should be able to watch? elapsed: {elapsed} >= estimated remaining time {estimated_remaining_time}")
+                    if ws is not None and not notifed:
+                        ws.send('{"type": "notify"}')
+                    notifed = True    
                 if entry.name.endswith("_000.mp4"):
                     data = vtt["data"]
                 else:
                     print("elapsed", elapsed)
                     data = offset(vtt["data"], elapsed)
+                if ws is not None:
+                    ws_data = {
+                        "type": "updateVtt", 
+                        "data": data
+                    }
+                    ws.send(stringify(ws_data))
                 with open(vtt_path, "a") as final_file:
                     final_file.write(data)
                 elapsed += segments[segment_number]["duration"]
                 segment_number += 1
+
+def get_vtt(url, ws=None):
+        hashed_url = get_hashed(url)
+        print(f"user requesting subtitles for url {url}, hash: {hashed_url}")
+        vtt_path = f"./vtt/{hashed_url}.vtt"
+        had = True
+        if not exists(vtt_path):
+            print("vtt not found, generating")
+            create_vtt(url, hashed_url, vtt_path, ws)
+            had = False
+        with open(vtt_path, "r") as final_file:
+            final_vtt = final_file.read()
+        if config["files"]["vtt"]["remove"]:
+            print(f"removing vtt at {vtt_path}")
+            remove(vtt_path)
+        return {"vtt": final_vtt, "had": had}    
+    

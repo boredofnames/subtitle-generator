@@ -128,7 +128,7 @@ def segment(path, duration, output_name):
     segment_count = 0
     for segment in segments:
         output_path = f"./tmp/segments/{output_name}_{str(segment_count).zfill(3)}.mp4"
-        segment_command = f"ffmpeg -i {path} -ss {segment["start_ts"]} -t {segment["duration_ts"]} -async 1 {output_path}".split(" ")
+        segment_command = f"ffmpeg -y -i {path} -ss {segment["start_ts"]} -t {segment["duration_ts"]} -async 1 {output_path}".split(" ")
         run(segment_command)
         segment_count += 1
 

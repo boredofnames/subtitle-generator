@@ -1,2 +1,2 @@
 call .\venv\Scripts\activate.bat
-.\venv\Scripts\flask.exe run
+.\venv\Scripts\python.exe .\app.py

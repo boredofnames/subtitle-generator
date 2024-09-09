@@ -1,38 +1,59 @@
-from os import remove
-from os.path import exists
+from uuid import uuid4
 from flask import Flask, jsonify, request  # type: ignore
-from lib.hash import get_hashed
-from lib.vtt import create_vtt
+from flask_websockets import WebSockets, ws, has_socket_context
+from lib.vtt import get_vtt
 from lib.utils import get_config
+from json import loads as json, dumps as stringify
 
 config = get_config()
 
 app = Flask(__name__)
+app.secret_key = bytes(config["server"]["secret"], 'utf-8')
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_SAMESITE='Strict'
+)
+sockets = WebSockets(app, patch_app_run=True)
 
+@app.route('/reply_via_ws')
+def send():
+    if has_socket_context():
+        ws.send('A reply via websocket')
+    # Note that this is still an HTTP request, so we need a response
+    return 'A reply via HTTP'
 
-@app.route("/")
-def hello():
-    return "Hello, World!"
-
+@app.route('/')
+def index():
+    session['ws.identifier'] = str(uuid4())
+    return render_template('index.html')
 
 @app.route("/vtt", methods=["POST"])
-def get_vtt():
+def vtt_route():
     try:
         url = request.get_json()["url"]
-        hashed_url = get_hashed(url)
-        print(f"user requesting subtitles for url {url}, hash: {hashed_url}")
-        vtt_path = f"./vtt/{hashed_url}.vtt"
-        if not exists(vtt_path):
-            print("vtt not found, generating")
-            create_vtt(url, hashed_url, vtt_path)
-        with open(vtt_path, "r") as final_file:
-            final_vtt = final_file.read()
-        if config["files"]["vtt"]["remove"]:
-            print(f"removing vtt at {vtt_path}")
-            remove(vtt_path)
-        return jsonify({"vtt": final_vtt})
+        vtt, had = get_vtt(url).values()
+        return jsonify({"vtt": vtt})
     except Exception as e:
         print(e)
         return jsonify(
             {"error": str(type(e).__name__), "cause": str(type(e).__cause__)}
         )
+@sockets.on_message
+def handle_message(message):
+    data = json(message)
+    print('Received message:', data)
+    url = data["url"]
+    if url is None:
+        return
+    response = f'{{"response": "Server received your message: {url}"}}'
+    ws.send(response)
+    vtt, had = get_vtt(url, ws=ws).values()
+    data = {"type": "vtt", "data": vtt}
+    if had:
+        ws.send(stringify(data))
+
+if __name__ == '__main__':
+    from gevent import pywsgi
+    from geventwebsocket.handler import WebSocketHandler
+    server = pywsgi.WSGIServer(('127.0.0.1', 5000), app, handler_class=WebSocketHandler)
+    server.serve_forever()

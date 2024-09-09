@@ -8,3 +8,6 @@ remove = true
 
 [files.vtt]
 remove = false
+
+[server]
+secret = "rEpLaCeMe!?lUlZ"

@@ -58,18 +58,9 @@ def create_vtt(url, hashed_url, vtt_path, ws=None):
                 segment_process_times.append(vtt["process_time"])
                 average_process_time = average(segment_process_times)
                 print(
-                    f"segment done. took {str(vtt["process_time"])} seconds. average process time: {str(average_process_time)}"
+                    f"segment {segment_number} done.\ntook {str(vtt["process_time"])} seconds.\naverage process time: {str(average_process_time)}"
                 )
-                estimated_remaining_time = average_process_time * (
-                    len(segments) - (segment_number + 1)
-                )
-                if elapsed >= estimated_remaining_time:
-                    print(
-                        f"should be able to watch? elapsed: {elapsed} >= estimated remaining time {estimated_remaining_time}"
-                    )
-                    if ws is not None and not notifed:
-                        ws.send('{"type": "notify"}')
-                    notifed = True
+
                 if entry.name.endswith("_000.mp4"):
                     data = vtt["data"]
                 else:
@@ -80,8 +71,19 @@ def create_vtt(url, hashed_url, vtt_path, ws=None):
                     ws.send(stringify(ws_data))
                 with open(vtt_path, "a") as final_file:
                     final_file.write(data)
+
                 elapsed += segments[segment_number]["duration"]
                 segment_number += 1
+                estimated_remaining_time = average_process_time * (
+                    len(segments) - (segment_number)
+                )
+                if elapsed >= estimated_remaining_time:
+                    print(
+                        f"should be able to watch?\nelapsed: {elapsed} >= estimated remaining time {estimated_remaining_time}"
+                    )
+                    if ws is not None and not notifed:
+                        ws.send('{"type": "notify"}')
+                    notifed = True
 
 
 def get_vtt(url, ws=None):

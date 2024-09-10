@@ -1,23 +1,22 @@
-import { waitUntil } from "./utils.js"
-import { fetchVtt, socketVtt } from "./vtt.js"
+import { waitUntil } from "./utils.js";
+import { fetchVtt, socketVtt } from "./vtt.js";
 
 const onMenuClick = async (info, tab) => {
-    console.log(info.menuItemId, tab)
-    if (info.menuItemId === "genSubs") {
-        console.log("clicked genSubs")
-        const url = tab.url
-        console.log(url)
-        const vtt = await waitUntil(fetchVtt(url))
-        console.log(vtt)
-        chrome.tabs.sendMessage(tab.id, { action: "vtt", vtt })
-    }
-    else if (info.menuItemId === "genSubsSockets") {
-        console.log("clicked genSubsSockets")
-        const url = tab.url
-        console.log(url)
-        socketVtt(url, tab.id)
-    }
-}
+	console.log(info.menuItemId, tab);
+	if (info.menuItemId === "genSubs") {
+		console.log("clicked genSubs");
+		const url = tab.url;
+		console.log(url);
+		const vtt = await waitUntil(fetchVtt(url));
+		console.log(vtt);
+		chrome.tabs.sendMessage(tab.id, { action: "vtt", vtt });
+	} else if (info.menuItemId === "genSubsSockets") {
+		console.log("clicked genSubsSockets");
+		const url = tab.url;
+		console.log(url);
+		socketVtt(url, tab.id);
+	}
+};
 
 const createContextMenus = () => {
 	chrome.contextMenus.create({
@@ -31,5 +30,4 @@ const createContextMenus = () => {
 		contexts: ["all"],
 	});
 };
-
-export { onMenuClick, createContextMenus }
+export { onMenuClick, createContextMenus };

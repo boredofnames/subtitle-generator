@@ -4,10 +4,12 @@
 length = 5 # in minutes
 
 [files.tmp]
-remove = true
+remove = true # should temp files be removed? useful for development
 
 [files.vtt]
-remove = false
+remove = false # should final generated subtitles be removed?
 
 [server]
+host = "127.0.0.1"
+port = 5000
 secret = "rEpLaCeMe!?lUlZ"

@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request, render_template  # type: ignore
-from flask_websockets import WebSockets, ws, has_socket_context
+from flask_websockets import WebSockets, ws
 from json import loads as json, dumps as stringify
 from lib.vtt import get_vtt
 from lib.utils import get_config

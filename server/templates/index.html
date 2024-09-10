@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Subtitle Generator Server</title>
+  </head>
+  <body>
+    <h1>Subtitles Generator REST/WebSocket Server</h1>
+    <p>
+      Welcome to the subtitle-generator back end. Learn more about the server
+      <a
+        href="https://github.com/boredofnames/subtitle-generator/blob/master/server/readme.md"
+      >
+        here</a
+      >.
+    </p>
+
+    <h2>REST</h2>
+    <ul>
+      <li>
+        / (GET)
+        <ul>
+          <li>Returns this page</li>
+        </ul>
+      </li>
+      <li>
+        /vtt (POST)
+        <ul>
+          <li>Expects (JSON): {"url": site_url}</li>
+          <li>Returns (JSON): {"vtt": vtt_data}</li>
+          <li>
+            Returns Error (JSON): {"error": error_name, "cause": error_cause}
+          </li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>WebSockets</h2>
+    <ul>
+      <li>Expects (JSON): {"url": site_url}</li>
+      <li>Returns (JSON): {"type": "vtt", "data": vtt_data}</li>
+    </ul>
+  </body>
+</html>

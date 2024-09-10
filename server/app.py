@@ -1,5 +1,4 @@
-from uuid import uuid4
-from flask import Flask, jsonify, request  # type: ignore
+from flask import Flask, jsonify, request, render_template  # type: ignore
 from flask_websockets import WebSockets, ws, has_socket_context
 from lib.vtt import get_vtt
 from lib.utils import get_config
@@ -15,17 +14,11 @@ app.config.update(
 )
 sockets = WebSockets(app, patch_app_run=True)
 
-@app.route('/reply_via_ws')
-def send():
-    if has_socket_context():
-        ws.send('A reply via websocket')
-    # Note that this is still an HTTP request, so we need a response
-    return 'A reply via HTTP'
 
-@app.route('/')
+@app.route("/", methods=["GET"])
 def index():
-    session['ws.identifier'] = str(uuid4())
-    return render_template('index.html')
+    return render_template("index.html")
+
 
 @app.route("/vtt", methods=["POST"])
 def vtt_route():

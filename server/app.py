@@ -34,15 +34,16 @@ def vtt_route():
 def handle_message(message):
     data = json(message)
     print("Received message:", data)
-    url = data["url"]
-    if url is None:
+    if "url" not in data:
         return
+    url = data["url"]
     response = f'{{"response": "Server received your message: {url}"}}'
     ws.send(response)
     vtt, had = get_vtt(url, ws=ws).values()
     data = {"type": "vtt", "data": vtt}
     if had:
         ws.send(stringify(data))
+    ws.close()
 
 
 if __name__ == "__main__":

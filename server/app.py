@@ -1,17 +1,14 @@
 from flask import Flask, jsonify, request, render_template  # type: ignore
 from flask_websockets import WebSockets, ws, has_socket_context
+from json import loads as json, dumps as stringify
 from lib.vtt import get_vtt
 from lib.utils import get_config
-from json import loads as json, dumps as stringify
 
 config = get_config()
 
 app = Flask(__name__)
-app.secret_key = bytes(config["server"]["secret"], 'utf-8')
-app.config.update(
-    SESSION_COOKIE_SECURE=True,
-    SESSION_COOKIE_SAMESITE='Strict'
-)
+app.secret_key = bytes(config["server"]["secret"], "utf-8")
+app.config.update(SESSION_COOKIE_SECURE=True, SESSION_COOKIE_SAMESITE="Strict")
 sockets = WebSockets(app, patch_app_run=True)
 
 
@@ -31,10 +28,12 @@ def vtt_route():
         return jsonify(
             {"error": str(type(e).__name__), "cause": str(type(e).__cause__)}
         )
+
+
 @sockets.on_message
 def handle_message(message):
     data = json(message)
-    print('Received message:', data)
+    print("Received message:", data)
     url = data["url"]
     if url is None:
         return
@@ -45,7 +44,8 @@ def handle_message(message):
     if had:
         ws.send(stringify(data))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     from gevent import pywsgi
     from geventwebsocket.handler import WebSocketHandler
 

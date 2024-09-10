@@ -11,6 +11,7 @@ from json import dumps as stringify
 
 config = get_config()
 
+
 def remove_tmp(path):
     if config["files"]["tmp"]["remove"]:
         remove(path)
@@ -42,7 +43,9 @@ def create_vtt(url, hashed_url, vtt_path, ws=None):
     create_dirs()
     get_video(url, video_path)
     segments = segment(
-        path=video_path, duration=config["files"]["segments"]["length"] * 60, output_name=hashed_url
+        path=video_path,
+        duration=config["files"]["segments"]["length"] * 60,
+        output_name=hashed_url,
     )
     remove_tmp(video_path)
     segment_number = 0
@@ -54,42 +57,45 @@ def create_vtt(url, hashed_url, vtt_path, ws=None):
                 vtt = process_segment(entry.path)
                 segment_process_times.append(vtt["process_time"])
                 average_process_time = average(segment_process_times)
-                print(f"segment done. took {str(vtt["process_time"])} seconds. average process time: {str(average_process_time)}")
-                estimated_remaining_time = average_process_time * (len(segments)-(segment_number + 1))
-                if(elapsed >= estimated_remaining_time):
-                    print(f"should be able to watch? elapsed: {elapsed} >= estimated remaining time {estimated_remaining_time}")
+                print(
+                    f"segment done. took {str(vtt["process_time"])} seconds. average process time: {str(average_process_time)}"
+                )
+                estimated_remaining_time = average_process_time * (
+                    len(segments) - (segment_number + 1)
+                )
+                if elapsed >= estimated_remaining_time:
+                    print(
+                        f"should be able to watch? elapsed: {elapsed} >= estimated remaining time {estimated_remaining_time}"
+                    )
                     if ws is not None and not notifed:
                         ws.send('{"type": "notify"}')
-                    notifed = True    
+                    notifed = True
                 if entry.name.endswith("_000.mp4"):
                     data = vtt["data"]
                 else:
                     print("elapsed", elapsed)
                     data = offset(vtt["data"], elapsed)
                 if ws is not None:
-                    ws_data = {
-                        "type": "updateVtt", 
-                        "data": data
-                    }
+                    ws_data = {"type": "updateVtt", "data": data}
                     ws.send(stringify(ws_data))
                 with open(vtt_path, "a") as final_file:
                     final_file.write(data)
                 elapsed += segments[segment_number]["duration"]
                 segment_number += 1
 
+
 def get_vtt(url, ws=None):
-        hashed_url = get_hashed(url)
-        print(f"user requesting subtitles for url {url}, hash: {hashed_url}")
-        vtt_path = f"./vtt/{hashed_url}.vtt"
-        had = True
-        if not exists(vtt_path):
-            print("vtt not found, generating")
-            create_vtt(url, hashed_url, vtt_path, ws)
-            had = False
-        with open(vtt_path, "r") as final_file:
-            final_vtt = final_file.read()
-        if config["files"]["vtt"]["remove"]:
-            print(f"removing vtt at {vtt_path}")
-            remove(vtt_path)
-        return {"vtt": final_vtt, "had": had}    
-    
+    hashed_url = get_hashed(url)
+    print(f"user requesting subtitles for url {url}, hash: {hashed_url}")
+    vtt_path = f"./vtt/{hashed_url}.vtt"
+    had = True
+    if not exists(vtt_path):
+        print("vtt not found, generating")
+        create_vtt(url, hashed_url, vtt_path, ws)
+        had = False
+    with open(vtt_path, "r") as final_file:
+        final_vtt = final_file.read()
+    if config["files"]["vtt"]["remove"]:
+        print(f"removing vtt at {vtt_path}")
+        remove(vtt_path)
+    return {"vtt": final_vtt, "had": had}

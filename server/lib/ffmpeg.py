@@ -22,7 +22,9 @@ def get_mean_volume(path):
 
 def get_metadata(path):
     print("getting metadata")
-    metadata_command = f"ffprobe -i {path} -v quiet -print_format json -show_format -hide_banner".split(" ")
+    metadata_command = f"ffprobe -i {path} -v quiet -print_format json -show_format -hide_banner".split(
+        " "
+    )
     metadata = check_output(metadata_command)
     print(metadata)
     metadata = loads(metadata)
@@ -128,7 +130,9 @@ def segment(path, duration, output_name):
     segment_count = 0
     for segment in segments:
         output_path = f"./tmp/segments/{output_name}_{str(segment_count).zfill(3)}.mp4"
-        segment_command = f"ffmpeg -y -i {path} -ss {segment["start_ts"]} -t {segment["duration_ts"]} -async 1 {output_path}".split(" ")
+        segment_command = f"ffmpeg -y -i {path} -ss {segment["start_ts"]} -t {segment["duration_ts"]} -async 1 {output_path}".split(
+            " "
+        )
         run(segment_command)
         segment_count += 1
 

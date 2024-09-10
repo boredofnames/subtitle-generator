@@ -19,17 +19,17 @@ const onMenuClick = async (info, tab) => {
     }
 }
 
-const createContextMenus = () =>
-    chrome.contextMenus.create({
-        "id": "genSubs",
-        "title": "Generate Subtitles",
-        "contexts": ["all"]
-    });
-    chrome.contextMenus.create({
-        "id": "genSubsSockets",
-        "title": "Generate Subtitles (sockets)",
-        "contexts": ["all"]
-    });
-
+const createContextMenus = () => {
+	chrome.contextMenus.create({
+		id: "genSubs",
+		title: "Generate Subtitles",
+		contexts: ["all"],
+	});
+	chrome.contextMenus.create({
+		id: "genSubsSockets",
+		title: "Generate Subtitles (sockets)",
+		contexts: ["all"],
+	});
+};
 
 export { onMenuClick, createContextMenus }

@@ -1,5 +1,5 @@
 flask==3.0.3
-flask-websockets==1.1.0
+git+https://github.com/shoeffner/Flask-Websockets.git@master#egg=Flask-Websockets
 git+https://github.com/openai/whisper.git
 yt-dlp==2024.8.6
 torch<2.4.0

@@ -14,42 +14,55 @@ const fetchVtt = async (url) => {
 }
 
 const socketVtt = (url, tabId) => {
-    function sendMessage(data) {
-        var message = JSON.stringify(data);
-        socket.send(message);
-    }
+	function sendMessage(data) {
+		var message = JSON.stringify(data);
+		socket.send(message);
+	}
 
-    const socket = new WebSocket('ws://127.0.0.1:5000');
+	function keepAlive() {
+		const keepAliveIntervalId = setInterval(() => {
+			if (socket) {
+				sendMessage({ ping: true });
+			} else {
+				clearInterval(keepAliveIntervalId);
+			}
+		}, 20 * 1000);
+	}
 
-    socket.addEventListener('open', (event) => {
-        console.log('Connected to the server');
-        sendMessage({ url })
-    });
+	let socket = new WebSocket("ws://127.0.0.1:5000");
 
-    socket.addEventListener('message', (event) => {
-        console.log(event.data)
-        const message = JSON.parse(event.data)
-        if (message.response)
-            console.log('Server says: ', message);
-        if (!message.type) return
-        if (message.type === "vtt" || message.type === "updateVtt") {
-            console.log("handling vtt part")
-            const vtt = message.data
-            console.log(vtt)
-            chrome.tabs.sendMessage(tabId, { action: message.type, vtt })
-        } else if (message.type === "notify") {
-            console.log("notify ready to watch")
-            const options = {
-                type: "basic",
-                title: "Subtitle Generator",
-                message: "Video should be watchable!",
-                iconUrl: "../icons/48.png"
-            }
-            chrome.notifications.create("ready", options)
-        }
+	socket.addEventListener("open", (event) => {
+		console.log("Connected to the server");
+		keepAlive();
+		sendMessage({ url });
+	});
 
-    });
+	socket.addEventListener("close", (event) => {
+		console.log("websocket connection closed");
+		socket = null;
+	});
 
-}
+	socket.addEventListener("message", (event) => {
+		console.log(event.data);
+		const message = JSON.parse(event.data);
+		if (message.response) console.log("Server says: ", message);
+		if (!message.type) return;
+		if (message.type === "vtt" || message.type === "updateVtt") {
+			console.log("handling vtt part");
+			const vtt = message.data;
+			console.log(vtt);
+			chrome.tabs.sendMessage(tabId, { action: message.type, vtt });
+		} else if (message.type === "notify") {
+			console.log("notify ready to watch");
+			const options = {
+				type: "basic",
+				title: "Subtitle Generator",
+				message: "Video should be watchable!",
+				iconUrl: "../icons/48.png",
+			};
+			chrome.notifications.create("ready", options);
+		}
+	});
+};
 
 export { fetchVtt, socketVtt }

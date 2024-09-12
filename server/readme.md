@@ -108,13 +108,13 @@ venv\Scripts\python.exe -m pip install -r requirements.txt
 ### Linux
 
 ```
-./venv/bin/flask run
+./venv/bin/python ./app.py
 ```
 
 ### Windows
 
 ```
-.\venv\Scripts\flask.exe run
+.\venv\Scripts\python.exe .\app.py
 ```
 
 ## Deactivate venv

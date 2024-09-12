@@ -1,5 +1,12 @@
 from tomllib import load as load_config
+from os.path import exists
+from shutil import copy2
 import datetime
+
+if not exists("./config.toml"):
+    if not exists("./config-example.toml"):
+        raise OSError("Missing config-example.toml! Exiting.")
+    copy2("./config-example.toml", "./config.toml")
 
 with open("./config.toml", "rb") as f:
     config = load_config(f)

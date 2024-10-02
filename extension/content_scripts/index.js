@@ -1,7 +1,7 @@
-const getUrl = () => location.href;
-const getVideoElement = () => document.querySelector("video");
+let vttData = "";
+let id = 0;
 
-let vttData = "WEBVTT\n\n";
+const getVideoElement = () => document.querySelector("video");
 
 const checkForSubs = () => {
 	const videoEl = getVideoElement();
@@ -15,9 +15,7 @@ const checkForSubs = () => {
 
 const makeVttBlob = (vttText) => new Blob([vttText], { type: "text/plain" });
 
-let id = 0;
 const makeTrack = (vttBlob) => {
-	console.log("making track ", id);
 	const track = document.createElement("track");
 	track.id = "sg-track-" + id++;
 	track.kind = "captions";
@@ -27,65 +25,74 @@ const makeTrack = (vttBlob) => {
 	return track;
 };
 
-const vttRegEx =
-	/\[((?:\d+:)?\d{2}:\d{2}\.\d{3} --> (?:\d+:)?\d{2}:\d{2}\.\d{3})\]  (.+)/g;
-const formatVTT = (vttText) =>
-	"WEBVTT\n\n" + vttText.replace(vttRegEx, "$1\n$2\n");
-
-const removeCues = (track) => {
-	console.log("removing cues");
-	for (const cue of track.cues) {
-		track.removeCue(cue);
-	}
-	console.log("track should be empty", track.cues);
-};
-
 const removeTrack = (track) => {
-	removeCues(track);
+	track.mode = "disabled";
 	document.getElementById(track.id).remove();
 };
 
 const updateSubs = (track, vttText) => {
-	track.mode = "hidden";
 	removeTrack(track);
-	setTimeout(() => injectSubs(vttText), 0);
+	injectSubs(vttText);
 };
 
 const injectSubs = (vttText) => {
 	const videoEl = getVideoElement();
 	const vttBlob = makeVttBlob(vttText);
 	const trackEl = makeTrack(vttBlob);
-	videoEl.addEventListener("loadedmetadata", (evt) => {
-		trackEl.mode = "showing";
-		videoEl.textTracks[videoEl.textTracks.length - 1].mode = "showing";
-	});
 	videoEl.append(trackEl);
-	videoEl.addEventListener("emptied", () => {
-		removeTrack(videoEl.textTracks[videoEl.textTracks.length - 1]);
-	});
 };
 
 const onMessage = (request, sender, sendResponse) => {
-	console.log("got message: ", request);
 	let track = checkForSubs();
 	if (!track) {
-		console.log("no track found, injecting", request.vtt);
 		vttData += request.vtt;
 		injectSubs(request.vtt);
 		return;
 	}
 
 	if (request.action === "vtt") {
-		vttData = "WEBVTT\n\n";
 		data = request.vtt;
 	} else if (request.action === "updateVtt") {
 		vttData += request.vtt;
 		data = vttData;
 	}
-	console.log("track found, updating with ", data);
+
 	updateSubs(track, data);
+
+	if (request.done) vttData = "";
+};
+
+const showTrack = (trackEl) => {
+	const videoEl = getVideoElement();
+	trackEl.mode = "showing";
+	videoEl.textTracks[videoEl.textTracks.length - 1].mode = "showing";
+};
+
+const attachVideoObserver = () => {
+	const videoEl = getVideoElement();
+	if (!videoEl) return;
+
+	const config = { attributes: true, childList: true };
+
+	const callback = (mutationList, observer) => {
+		for (const mutation of mutationList) {
+			if (mutation.type === "childList" && mutation.addedNodes[0]) {
+				showTrack(mutation.addedNodes[0]);
+			} else if (
+				mutation.type === "attributes" &&
+				mutation.attributeName === "src"
+			) {
+				const track = checkForSubs();
+				if (track) removeTrack(track);
+			}
+		}
+	};
+
+	const observer = new MutationObserver(callback);
+	observer.observe(videoEl, config);
 };
 
 chrome.runtime.onMessage.addListener(onMessage);
+attachVideoObserver();
 
 console.log("injected Subtitle Generator content script");

@@ -1,10 +1,9 @@
-const fetchVtt = async (url) => {
+const fetchVtt = async (url, mock = false) => {
 	const headers = new Headers();
 	headers.append("Content-Type", "application/json");
-
 	const response = await fetch("http://127.0.0.1:5000/vtt", {
 		method: "POST",
-		body: JSON.stringify({ url }),
+		body: JSON.stringify({ url, mock }),
 		headers,
 	});
 
@@ -13,7 +12,7 @@ const fetchVtt = async (url) => {
 	return data.vtt;
 };
 
-const socketVtt = (url, tabId) => {
+const socketVtt = (url, tabId, mock = false) => {
 	function sendMessage(data) {
 		var message = JSON.stringify(data);
 		socket.send(message);
@@ -34,7 +33,7 @@ const socketVtt = (url, tabId) => {
 	socket.addEventListener("open", (event) => {
 		console.log("Connected to the server");
 		keepAlive();
-		sendMessage({ url });
+		sendMessage({ url, mock });
 	});
 
 	socket.addEventListener("close", (event) => {
@@ -51,7 +50,11 @@ const socketVtt = (url, tabId) => {
 			console.log("handling vtt part");
 			const vtt = message.data;
 			console.log(vtt);
-			chrome.tabs.sendMessage(tabId, { action: message.type, vtt });
+			chrome.tabs.sendMessage(tabId, {
+				action: message.type,
+				vtt,
+				done: message.done,
+			});
 		} else if (message.type === "notify") {
 			console.log("notify ready to watch");
 			const options = {

@@ -1,13 +1,14 @@
 from os import scandir, remove, makedirs
 from os.path import exists
 from time import time
+from json import dumps as stringify
+from time import sleep
 from lib.yt import get_video
 from lib.ffmpeg import segment
 from lib.whisper import generate_vtt
 from lib.subtitles import offset
 from lib.utils import get_config, average
 from lib.hash import get_hashed
-from json import dumps as stringify
 
 config = get_config()
 
@@ -67,7 +68,11 @@ def create_vtt(url, hashed_url, vtt_path, ws=None):
                     print("elapsed", elapsed)
                     data = offset(vtt["data"], elapsed)
                 if ws is not None:
-                    ws_data = {"type": "updateVtt", "data": data}
+                    ws_data = {
+                        "type": "updateVtt",
+                        "data": data,
+                        "done": len(segments) == segment_number,
+                    }
                     ws.send(stringify(ws_data))
                 with open(vtt_path, "a") as final_file:
                     final_file.write(data)
@@ -100,4 +105,23 @@ def get_vtt(url, ws=None):
     if config["files"]["vtt"]["remove"]:
         print(f"removing vtt at {vtt_path}")
         remove(vtt_path)
+    return {"vtt": final_vtt, "had": had}
+
+
+def get_mock_vtt(url, ws=None, had=False):
+    vtt_parts = [
+        "WEBVTT\n\n00:00:00.000 --> 00:01:00.000\nThis is a test one of four\n\n",
+        "00:01:00.000 --> 00:02:00.000\nThis is a test two of four\n\n",
+        "00:02:00.000 --> 00:03:00.000\nThis is a test three of four\n\n",
+        "00:03:00.000 --> 00:04:00.000\nThis is a test four of four\n\n",
+    ]
+    if ws is not None:
+        for i, part in enumerate(vtt_parts):
+            done = i == len(vtt_parts) - 1
+            ws_data = {"type": "updateVtt", "data": part, "done": done, "bitch": "yes"}
+            ws.send(stringify(ws_data))
+            sleep(5)
+
+    final_vtt = "".join(vtt_parts)
+    sleep(1)
     return {"vtt": final_vtt, "had": had}

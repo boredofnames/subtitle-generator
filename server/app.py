@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request, render_template  # type: ignore
 from flask_websockets import WebSockets, ws
 from json import loads as json, dumps as stringify
-from lib.vtt import get_vtt
+from lib.vtt import get_vtt, get_mock_vtt
 from lib.utils import get_config
 
 config = get_config()
@@ -20,8 +20,13 @@ def index():
 @app.route("/vtt", methods=["POST"])
 def vtt_route():
     try:
-        url = request.get_json()["url"]
-        vtt, had = get_vtt(url).values()
+        data = request.get_json()
+        url = data["url"]
+        mock = data["mock"]
+        if mock:
+            vtt, had = get_mock_vtt(url).values()
+        else:
+            vtt, had = get_vtt(url).values()
         return jsonify({"vtt": vtt})
     except Exception as e:
         print(e)
@@ -37,11 +42,15 @@ def handle_message(message):
     if "url" not in data:
         return
     url = data["url"]
+    mock = data["mock"]
     response = f'{{"response": "Server received your message: {url}"}}'
     ws.send(response)
-    vtt, had = get_vtt(url, ws=ws).values()
-    data = {"type": "vtt", "data": vtt}
+    if mock:
+        vtt, had = get_mock_vtt(url, ws=ws).values()
+    else:
+        vtt, had = get_vtt(url, ws=ws).values()
     if had:
+        data = {"type": "vtt", "data": vtt}
         ws.send(stringify(data))
     ws.close()
 

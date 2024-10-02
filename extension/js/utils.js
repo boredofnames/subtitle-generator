@@ -1,3 +1,5 @@
+const debug = false;
+
 const waitUntil = async (promise) => {
 	console.log("keeping alive");
 	const keepAlive = setInterval(chrome.runtime.getPlatformInfo, 25 * 1000);
@@ -11,4 +13,4 @@ const waitUntil = async (promise) => {
 	return data;
 };
 
-export { waitUntil };
+export { debug, waitUntil };

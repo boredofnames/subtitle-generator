@@ -1,40 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Subtitle Generator</title>
+		<link rel="stylesheet" href="./index.css" />
+	</head>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subtitle Generator</title>
-    <link rel="stylesheet" href="./index.css" />
-</head>
-
-<body>
-    <h2>Actions</h2>
-    <button id="gen-subs">Generate Subtitles</button>
-    <button id="gen-subs-sockets">Generate Subtitles (sockets)</button>
-    <h2>Options</h2>
-    <form>
-        <label for="model">Model</label>
-        <select id="model">
-            <optgroup label="Multilingual">
-                <option value="tiny">tiny</option>
-                <option value="base">base</option>
-                <option value="small">small</option>
-                <option value="medium">medium</option>
-                <option value="large">large</option>
-                <option value="turbo">turbo</option>
-            </optgroup>
-            <optgroup label="English Only">
-                <option value="tiny.en">tiny.en</option>
-                <option value="base.en">base.en</option>
-                <option value="small.en">small.en</option>
-                <option value="medium.en">medium.en</option>
-            </optgroup>
-        </select>
-        <label for="language">Language</label>
-        <select id="language"></select>
-    </form>
-    <script src="./index.js" type="module"></script>
-</body>
-
+	<body>
+		<h2>Actions</h2>
+		<button id="gen-subs">Generate Subtitles</button>
+		<button id="gen-subs-sockets">Generate Subtitles (sockets)</button>
+		<h2>Options</h2>
+		<form>
+			<label for="model">Model</label>
+			<select id="model">
+				<optgroup label="Multilingual">
+					<option value="tiny">tiny</option>
+					<option value="base">base</option>
+					<option value="small">small</option>
+					<option value="medium">medium</option>
+					<option value="large">large</option>
+					<option value="turbo">turbo</option>
+				</optgroup>
+				<optgroup label="English Only">
+					<option value="tiny.en">tiny.en</option>
+					<option value="base.en">base.en</option>
+					<option value="small.en">small.en</option>
+					<option value="medium.en">medium.en</option>
+				</optgroup>
+			</select>
+			<label for="language">Language</label>
+			<select id="language"></select>
+		</form>
+		<script src="./index.js" type="module"></script>
+	</body>
 </html>

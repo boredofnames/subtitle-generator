@@ -3,15 +3,15 @@ import { genSubs, genSubsSockets } from "./vtt.js";
 
 const onMenuClick = async (info, tab) => {
 	const url = tab.url;
-	const id = tab.id
+	const id = tab.id;
 	if (info.menuItemId === "genSubs") {
-		genSubs(url, id)
+		genSubs(url, id);
 	} else if (info.menuItemId === "genSubsSockets") {
-		genSubsSockets(url, id)
+		genSubsSockets(url, id);
 	} else if (info.menuItemId === "mockSubs") {
-		genSubs(url, id, true)
+		genSubs(url, id, true);
 	} else if (info.menuItemId === "mockSubsSockets") {
-		genSubsSockets(url, id, true)
+		genSubsSockets(url, id, true);
 	}
 };
 

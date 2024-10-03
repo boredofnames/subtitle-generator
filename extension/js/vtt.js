@@ -3,15 +3,15 @@ import { waitUntil } from "./utils.js";
 const fetchVtt = async (url, mock = false) => {
 	const headers = new Headers();
 	headers.append("Content-Type", "application/json");
-	const options = (await chrome.storage.sync.get("options")).options
+	const options = (await chrome.storage.sync.get("options")).options;
 	const response = await fetch("http://127.0.0.1:5000/vtt", {
 		method: "POST",
 		body: JSON.stringify({ url, options, mock }),
 		headers,
 	});
 
-	const {vtt, language} = await response.json();
-	return {vtt, language};
+	const { vtt, language } = await response.json();
+	return { vtt, language };
 };
 
 const socketVtt = (url, tabId, mock = false) => {
@@ -34,7 +34,7 @@ const socketVtt = (url, tabId, mock = false) => {
 
 	socket.addEventListener("open", async (event) => {
 		console.log("Connected to the server");
-		const options = (await chrome.storage.sync.get("options")).options
+		const options = (await chrome.storage.sync.get("options")).options;
 		keepAlive();
 		sendMessage({ url, options, mock });
 	});
@@ -46,7 +46,14 @@ const socketVtt = (url, tabId, mock = false) => {
 
 	socket.addEventListener("message", (event) => {
 		console.log(event.data);
-		const {response, type, message, data:vtt, language, done} = JSON.parse(event.data);
+		const {
+			response,
+			type,
+			message,
+			data: vtt,
+			language,
+			done,
+		} = JSON.parse(event.data);
 		if (response) console.log("Server says: ", message);
 		if (!type) return;
 		if (type === "vtt" || type === "updateVtt") {
@@ -72,12 +79,12 @@ const socketVtt = (url, tabId, mock = false) => {
 };
 
 const genSubs = async (url, tabId, mock = false) => {
-	const {vtt, language} = await waitUntil(fetchVtt(url, mock));
+	const { vtt, language } = await waitUntil(fetchVtt(url, mock));
 	chrome.tabs.sendMessage(tabId, { action: "vtt", vtt, language });
-}
+};
 
 const genSubsSockets = (url, tabId, mock = false) => {
 	socketVtt(url, tabId, mock);
-}
+};
 
 export { genSubs, genSubsSockets };

@@ -20,7 +20,7 @@
 		"48": "icons/48.png",
 		"128": "icons/128.png"
 	},
-	"action":{
+	"action": {
 		"default_popup": "popup/index.html"
 	},
 	"permissions": ["contextMenus", "notifications", "storage", "tabs"]

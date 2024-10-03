@@ -1,4 +1,4 @@
-const debug = false;
+const debug = true;
 
 const waitUntil = async (promise) => {
 	console.log("keeping alive");
@@ -13,6 +13,15 @@ const waitUntil = async (promise) => {
 	return data;
 };
 
-const getTab = async () => (await chrome.tabs.query({active: true, currentWindow: true}))[0]
+const getTab = async () =>
+	(await chrome.tabs.query({ active: true, currentWindow: true }))[0];
 
-export { debug, waitUntil, getTab };
+const initOptions = async () => {
+	const options = (await chrome.storage.sync.get("options")).options;
+	if (!options) {
+		const options = { model: "small", language: "English" };
+		chrome.storage.sync.set({ options });
+	}
+};
+
+export { debug, waitUntil, getTab, initOptions };

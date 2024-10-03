@@ -95,7 +95,7 @@ def create_vtt(url, hashed_url, vtt_path, options, ws=None):
 def get_vtt(url, options, ws=None):
     hashed_url = get_hashed(url)
     print(f"user requesting subtitles for url {url}, hash: {hashed_url}")
-    vtt_path = f"./vtt/{hashed_url}.vtt"
+    vtt_path = f"./vtt/{hashed_url}-{options["language"]}.vtt"
     had = True
     if not exists(vtt_path):
         print("vtt not found, generating")
@@ -119,7 +119,12 @@ def get_mock_vtt(url, options, ws=None, had=False):
     if ws is not None:
         for i, part in enumerate(vtt_parts):
             done = i == len(vtt_parts) - 1
-            ws_data = {"type": "updateVtt", "data": part, "language": options["language"], "done": done}
+            ws_data = {
+                "type": "updateVtt",
+                "data": part,
+                "language": options["language"],
+                "done": done,
+            }
             ws.send(stringify(ws_data))
             sleep(5)
 

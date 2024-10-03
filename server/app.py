@@ -22,12 +22,13 @@ def vtt_route():
     try:
         data = request.get_json()
         url = data["url"]
+        options = data["options"]
         mock = data["mock"]
         if mock:
-            vtt, had = get_mock_vtt(url).values()
+            vtt, had = get_mock_vtt(url, options=options).values()
         else:
-            vtt, had = get_vtt(url).values()
-        return jsonify({"vtt": vtt})
+            vtt, had = get_vtt(url, options=options).values()
+        return jsonify({"vtt": vtt, "language": options["language"]})
     except Exception as e:
         print(e)
         return jsonify(
@@ -42,15 +43,16 @@ def handle_message(message):
     if "url" not in data:
         return
     url = data["url"]
+    options = data["options"]
     mock = data["mock"]
     response = f'{{"response": "Server received your message: {url}"}}'
     ws.send(response)
     if mock:
-        vtt, had = get_mock_vtt(url, ws=ws).values()
+        vtt, had = get_mock_vtt(url, options=options, ws=ws).values()
     else:
-        vtt, had = get_vtt(url, ws=ws).values()
+        vtt, had = get_vtt(url, options=options, ws=ws).values()
     if had:
-        data = {"type": "vtt", "data": vtt}
+        data = {"type": "vtt", "data": vtt, "language": options["language"]}
         ws.send(stringify(data))
     ws.close()
 

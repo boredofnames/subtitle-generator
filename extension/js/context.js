@@ -1,18 +1,17 @@
-import { debug, waitUntil } from "./utils.js";
-import { fetchVtt, socketVtt } from "./vtt.js";
+import { debug } from "./utils.js";
+import { genSubs, genSubsSockets } from "./vtt.js";
 
 const onMenuClick = async (info, tab) => {
 	const url = tab.url;
+	const id = tab.id
 	if (info.menuItemId === "genSubs") {
-		const vtt = await waitUntil(fetchVtt(url));
-		chrome.tabs.sendMessage(tab.id, { action: "vtt", vtt });
+		genSubs(url, id)
 	} else if (info.menuItemId === "genSubsSockets") {
-		socketVtt(url, tab.id);
+		genSubsSockets(url, id)
 	} else if (info.menuItemId === "mockSubs") {
-		const vtt = await waitUntil(fetchVtt(url, true));
-		chrome.tabs.sendMessage(tab.id, { action: "vtt", vtt });
+		genSubs(url, id, true)
 	} else if (info.menuItemId === "mockSubsSockets") {
-		socketVtt(url, tab.id, true);
+		genSubsSockets(url, id, true)
 	}
 };
 
@@ -40,4 +39,5 @@ const createContextMenus = () => {
 		});
 	}
 };
+
 export { onMenuClick, createContextMenus };

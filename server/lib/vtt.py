@@ -18,9 +18,9 @@ def remove_tmp(path):
         remove(path)
 
 
-def process_segment(path):
+def process_segment(path, options):
     start = time()
-    generate_vtt(path, "small", "English")
+    generate_vtt(path, options["model"], options["language"])
     end = time()
     remove_tmp(path)
     tmp_vtt_path = path.replace("/segments", "/vtt").replace("mp4", "vtt")
@@ -37,7 +37,7 @@ def create_dirs():
             makedirs(adir)
 
 
-def create_vtt(url, hashed_url, vtt_path, ws=None):
+def create_vtt(url, hashed_url, vtt_path, options, ws=None):
     segment_process_times = []
     elapsed = 0
     video_path = f"./tmp/{hashed_url}.mp4"
@@ -55,7 +55,7 @@ def create_vtt(url, hashed_url, vtt_path, ws=None):
         for entry in it:
             if entry.name.endswith(".mp4") and entry.is_file():
                 print(entry.name, entry.path)
-                vtt = process_segment(entry.path)
+                vtt = process_segment(entry.path, options)
                 segment_process_times.append(vtt["process_time"])
                 average_process_time = average(segment_process_times)
                 print(
@@ -71,6 +71,7 @@ def create_vtt(url, hashed_url, vtt_path, ws=None):
                     ws_data = {
                         "type": "updateVtt",
                         "data": data,
+                        "language": options["language"],
                         "done": len(segments) == segment_number,
                     }
                     ws.send(stringify(ws_data))
@@ -91,14 +92,14 @@ def create_vtt(url, hashed_url, vtt_path, ws=None):
                     notifed = True
 
 
-def get_vtt(url, ws=None):
+def get_vtt(url, options, ws=None):
     hashed_url = get_hashed(url)
     print(f"user requesting subtitles for url {url}, hash: {hashed_url}")
     vtt_path = f"./vtt/{hashed_url}.vtt"
     had = True
     if not exists(vtt_path):
         print("vtt not found, generating")
-        create_vtt(url, hashed_url, vtt_path, ws)
+        create_vtt(url, hashed_url, vtt_path, options, ws)
         had = False
     with open(vtt_path, "r") as final_file:
         final_vtt = final_file.read()
@@ -108,7 +109,7 @@ def get_vtt(url, ws=None):
     return {"vtt": final_vtt, "had": had}
 
 
-def get_mock_vtt(url, ws=None, had=False):
+def get_mock_vtt(url, options, ws=None, had=False):
     vtt_parts = [
         "WEBVTT\n\n00:00:00.000 --> 00:01:00.000\nThis is a test one of four\n\n",
         "00:01:00.000 --> 00:02:00.000\nThis is a test two of four\n\n",
@@ -118,7 +119,7 @@ def get_mock_vtt(url, ws=None, had=False):
     if ws is not None:
         for i, part in enumerate(vtt_parts):
             done = i == len(vtt_parts) - 1
-            ws_data = {"type": "updateVtt", "data": part, "done": done, "bitch": "yes"}
+            ws_data = {"type": "updateVtt", "data": part, "language": options["language"], "done": done}
             ws.send(stringify(ws_data))
             sleep(5)
 

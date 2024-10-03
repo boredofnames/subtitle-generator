@@ -13,4 +13,6 @@ const waitUntil = async (promise) => {
 	return data;
 };
 
-export { debug, waitUntil };
+const getTab = async () => (await chrome.tabs.query({active: true, currentWindow: true}))[0]
+
+export { debug, waitUntil, getTab };

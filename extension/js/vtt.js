@@ -1,15 +1,17 @@
+import { waitUntil } from "./utils.js";
+
 const fetchVtt = async (url, mock = false) => {
 	const headers = new Headers();
 	headers.append("Content-Type", "application/json");
+	const options = (await chrome.storage.sync.get("options")).options
 	const response = await fetch("http://127.0.0.1:5000/vtt", {
 		method: "POST",
-		body: JSON.stringify({ url, mock }),
+		body: JSON.stringify({ url, options, mock }),
 		headers,
 	});
 
-	const data = await response.json();
-	console.log(data);
-	return data.vtt;
+	const {vtt, language} = await response.json();
+	return {vtt, language};
 };
 
 const socketVtt = (url, tabId, mock = false) => {
@@ -30,10 +32,11 @@ const socketVtt = (url, tabId, mock = false) => {
 
 	let socket = new WebSocket("ws://127.0.0.1:5000");
 
-	socket.addEventListener("open", (event) => {
+	socket.addEventListener("open", async (event) => {
 		console.log("Connected to the server");
+		const options = (await chrome.storage.sync.get("options")).options
 		keepAlive();
-		sendMessage({ url, mock });
+		sendMessage({ url, options, mock });
 	});
 
 	socket.addEventListener("close", (event) => {
@@ -43,19 +46,19 @@ const socketVtt = (url, tabId, mock = false) => {
 
 	socket.addEventListener("message", (event) => {
 		console.log(event.data);
-		const message = JSON.parse(event.data);
-		if (message.response) console.log("Server says: ", message);
-		if (!message.type) return;
-		if (message.type === "vtt" || message.type === "updateVtt") {
+		const {response, type, message, data:vtt, language, done} = JSON.parse(event.data);
+		if (response) console.log("Server says: ", message);
+		if (!type) return;
+		if (type === "vtt" || type === "updateVtt") {
 			console.log("handling vtt part");
-			const vtt = message.data;
 			console.log(vtt);
 			chrome.tabs.sendMessage(tabId, {
-				action: message.type,
+				action: type,
 				vtt,
-				done: message.done,
+				language,
+				done,
 			});
-		} else if (message.type === "notify") {
+		} else if (type === "notify") {
 			console.log("notify ready to watch");
 			const options = {
 				type: "basic",
@@ -68,4 +71,13 @@ const socketVtt = (url, tabId, mock = false) => {
 	});
 };
 
-export { fetchVtt, socketVtt };
+const genSubs = async (url, tabId, mock = false) => {
+	const {vtt, language} = await waitUntil(fetchVtt(url, mock));
+	chrome.tabs.sendMessage(tabId, { action: "vtt", vtt, language });
+}
+
+const genSubsSockets = (url, tabId, mock = false) => {
+	socketVtt(url, tabId, mock);
+}
+
+export { genSubs, genSubsSockets };

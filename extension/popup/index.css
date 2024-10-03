@@ -1,0 +1,30 @@
+body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 200px;
+    background-color: #282828;
+    color: #ebdbb2;
+}
+
+body * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; 
+}
+
+select, button {
+    background-color: #3c3836;
+    color: #ebdbb2;
+}
+
+button {
+    padding: 4px;
+    border-radius: 5px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}

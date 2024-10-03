@@ -20,5 +20,8 @@
 		"48": "icons/48.png",
 		"128": "icons/128.png"
 	},
-	"permissions": ["activeTab", "contextMenus", "notifications"]
+	"action":{
+		"default_popup": "popup/index.html"
+	},
+	"permissions": ["contextMenus", "notifications", "storage", "tabs"]
 }

@@ -141,7 +141,8 @@ const onMessage = ({ action, vtt, language, done }, sender, sendResponse) => {
 
 	let track = checkForTrack();
 	if (!track) {
-		vttData += vtt;
+		if (!vtt.startsWith("WEBVTT")) vtt = "WEBVTT\n\n" + vtt;
+		vttData = vtt;
 		injectSubs(vtt, language);
 		return;
 	}

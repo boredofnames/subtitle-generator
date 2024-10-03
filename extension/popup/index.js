@@ -52,12 +52,12 @@ function setupLanguage() {
 }
 
 async function genSubs() {
-	chrome.runtime.sendMessage("genSubs");
+	await chrome.runtime.sendMessage("genSubs");
 	window.close();
 }
 
 async function genSubsSockets() {
-	chrome.runtime.sendMessage("genSubsSockets");
+	await chrome.runtime.sendMessage("genSubsSockets");
 	window.close();
 }
 
